@@ -31,7 +31,7 @@ class RedirectControllerTest {
 
 	@Test
 	void knownCodeRedirectsWith302() throws Exception {
-		when(service.getOriginalUrl("abc1234")).thenReturn("https://example.com/a?b=1");
+		when(service.resolveRedirect("abc1234")).thenReturn("https://example.com/a?b=1");
 
 		mockMvc.perform(get("/abc1234"))
 				.andExpect(status().isFound())
@@ -41,7 +41,7 @@ class RedirectControllerTest {
 
 	@Test
 	void unknownCodeReturns404() throws Exception {
-		when(service.getOriginalUrl("nope123")).thenThrow(new ShortUrlNotFoundException("nope123"));
+		when(service.resolveRedirect("nope123")).thenThrow(new ShortUrlNotFoundException("nope123"));
 
 		mockMvc.perform(get("/nope123")).andExpect(status().isNotFound());
 	}
@@ -51,6 +51,6 @@ class RedirectControllerTest {
 	void codesNotMatchingPatternReturn404WithoutCallingService(String path) throws Exception {
 		mockMvc.perform(get(path)).andExpect(status().isNotFound());
 
-		verify(service, never()).getOriginalUrl(ArgumentMatchers.any());
+		verify(service, never()).resolveRedirect(ArgumentMatchers.any());
 	}
 }

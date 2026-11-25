@@ -64,7 +64,7 @@ class GlobalExceptionHandlerTest {
 
 	@Test
 	void unknownCodeReturns404Problem() throws Exception {
-		when(service.getOriginalUrl("nope123")).thenThrow(new ShortUrlNotFoundException("nope123"));
+		when(service.resolveRedirect("nope123")).thenThrow(new ShortUrlNotFoundException("nope123"));
 
 		mockMvc.perform(get("/nope123"))
 				.andExpect(status().isNotFound())

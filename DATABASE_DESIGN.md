@@ -10,6 +10,8 @@ PostgreSQL 18. The schema is managed by Flyway; Hibernate only validates it (`sp
 | `code`         | `VARCHAR(16)`   | `NOT NULL`, unique (`uk_short_urls_code`)    | The short code that identifies a URL     |
 | `original_url` | `VARCHAR(2048)` | `NOT NULL`                                   | The full URL the short code points to    |
 | `created_at`   | `TIMESTAMPTZ`   | `NOT NULL`                                   | When the record was created (UTC instant) |
+| `click_count`  | `BIGINT`        | `NOT NULL`, default `0` (added in V2)        | Number of redirects served for this code |
+| `last_accessed_at` | `TIMESTAMPTZ` | nullable (added in V2)                      | Time of the latest redirect; `NULL` until first click |
 
 ## Why these constraints
 
@@ -19,6 +21,12 @@ PostgreSQL 18. The schema is managed by Flyway; Hibernate only validates it (`sp
 - **`NOT NULL` everywhere**: every record needs a code, a target and a creation time.
 - **`GENERATED ALWAYS` identity**: the application can never supply its own id, so ids stay consistent.
 - **`TIMESTAMPTZ`**: stores an unambiguous point in time, which maps to `java.time.Instant`.
+
+## Click counting (V2)
+
+`V2__add_click_count.sql` adds `click_count` (`NOT NULL DEFAULT 0`, so existing rows start at 0) and `last_accessed_at` (nullable, because a never-clicked link has no access time).
+
+The increment is a single atomic `UPDATE short_urls SET click_count = click_count + 1, last_accessed_at = ? WHERE code = ?` (`ShortUrlRepository.incrementClickCount`), not a read-modify-write in Java. With read-modify-write, two concurrent redirects can both read `5` and both write `6`, losing a click. The atomic UPDATE takes a row lock, so the database serializes concurrent increments and none are lost. A test with 20 simultaneous redirects verifies this.
 
 ## Schema changes
 

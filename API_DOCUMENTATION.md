@@ -53,9 +53,9 @@ The base of `shortUrl` comes from `APP_BASE_URL` (default `http://localhost:8080
 
 ## GET /{code}
 
-Redirects to the original URL. `code` must be exactly 7 Base62 characters (`[0-9A-Za-z]`); anything else is not routed here and returns 404. A temporary `302` is used (not `301`) so browsers don't cache it and clicks can be counted later.
+Redirects to the original URL. `code` must be exactly 7 Base62 characters (`[0-9A-Za-z]`); anything else is not routed here and returns 404. A temporary `302` is used (not `301`) so browsers don't cache it so every redirect is counted.
 
-**Response `302 Found`** with `Location: <originalUrl>` and an empty body.
+**Response `302 Found`** with `Location: <originalUrl>` and an empty body. Each successful redirect increments the link's click count and updates its last-accessed time (see [stats](#get-apiurlscodestats)).
 
 **Status codes**
 
@@ -70,6 +70,36 @@ Redirects to the original URL. `code` must be exactly 7 Base62 characters (`[0-9
 curl -i http://localhost:8080/aB3xY9z
 # HTTP/1.1 302
 # Location: https://example.com/some/long/path
+```
+
+## GET /api/urls/{code}/stats
+
+Returns click statistics for a short link. `code` must be exactly 7 Base62 characters; anything else returns 404. Reading stats does not count as a click.
+
+**Response `200 OK`**
+
+```json
+{
+  "code": "aB3xY9z",
+  "shortUrl": "http://localhost:8080/aB3xY9z",
+  "originalUrl": "https://example.com/some/long/path",
+  "clickCount": 2,
+  "createdAt": "2026-11-25T10:30:00.123456Z",
+  "lastAccessedAt": "2026-11-25T10:35:10.654321Z"
+}
+```
+
+`lastAccessedAt` is `null` until the first redirect.
+
+**Status codes**
+
+| Code | When |
+|------|------|
+| 200  | Code exists |
+| 404  | Unknown code, or code not matching `[0-9A-Za-z]{7}` |
+
+```bash
+curl -i http://localhost:8080/api/urls/aB3xY9z/stats
 ```
 
 ## Errors

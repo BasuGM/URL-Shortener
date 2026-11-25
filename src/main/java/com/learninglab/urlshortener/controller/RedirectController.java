@@ -23,7 +23,7 @@ public class RedirectController {
 	@GetMapping("/{code:[0-9A-Za-z]{7}}")
 	public ResponseEntity<Void> redirect(@PathVariable String code) {
 		return ResponseEntity.status(HttpStatus.FOUND)
-				.location(URI.create(service.getOriginalUrl(code)))
+				.location(URI.create(service.resolveRedirect(code)))
 				.build();
 	}
 }

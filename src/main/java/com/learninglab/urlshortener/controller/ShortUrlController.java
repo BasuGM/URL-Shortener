@@ -3,6 +3,8 @@ package com.learninglab.urlshortener.controller;
 import java.net.URI;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.learninglab.urlshortener.dto.CreateShortUrlRequest;
 import com.learninglab.urlshortener.dto.ShortUrlResponse;
+import com.learninglab.urlshortener.dto.ShortUrlStatsResponse;
 import com.learninglab.urlshortener.service.ShortUrlService;
 
 import jakarta.validation.Valid;
@@ -22,6 +25,11 @@ public class ShortUrlController {
 
 	public ShortUrlController(ShortUrlService service) {
 		this.service = service;
+	}
+
+	@GetMapping("/{code:[0-9A-Za-z]{7}}/stats")
+	public ShortUrlStatsResponse stats(@PathVariable String code) {
+		return service.getStats(code);
 	}
 
 	@PostMapping

@@ -26,6 +26,12 @@ public class ShortUrl {
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
+	@Column(name = "click_count", nullable = false)
+	private long clickCount;
+
+	@Column(name = "last_accessed_at")
+	private Instant lastAccessedAt;
+
 	protected ShortUrl() {
 	}
 
@@ -49,6 +55,14 @@ public class ShortUrl {
 
 	public Instant getCreatedAt() {
 		return createdAt;
+	}
+
+	public long getClickCount() {
+		return clickCount;
+	}
+
+	public Instant getLastAccessedAt() {
+		return lastAccessedAt;
 	}
 
 	@Override
