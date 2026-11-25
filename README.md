@@ -24,6 +24,7 @@ The server listens on port 8080 (override with `SERVER_PORT`). Flyway applies th
 |----------------|---------------------------------------------|--------------------------------------------|
 | `SERVER_PORT`  | `8080`                                      | HTTP port                                  |
 | `DB_URL`       | `jdbc:postgresql://localhost:5432/urlshortener` | JDBC URL used by the app               |
+| `APP_BASE_URL` | `http://localhost:8080`                     | Public base URL used to build short links  |
 | `DB_USERNAME`  | `urlshortener`                              | Database user (also used by docker compose) |
 | `DB_PASSWORD`  | `urlshortener`                              | Database password (also used by docker compose) |
 
