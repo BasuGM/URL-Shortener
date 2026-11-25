@@ -1,0 +1,74 @@
+@baseUrl = http://localhost:8080
+
+### 1. Health check → 200
+GET {{baseUrl}}/api/health
+
+### 2. Create short URL → 201 + Location
+# @name create
+POST {{baseUrl}}/api/urls
+Content-Type: application/json
+
+{ "url": "https://example.com/some/very/long/path?x=1" }
+
+### 3. Redirect → 302 (see note on redirects)
+# @no-redirect
+GET {{baseUrl}}/{{create.response.body.code}}
+
+
+### 4. Stats → 200, clickCount goes up after each run of #3
+GET {{baseUrl}}/api/urls/{{create.response.body.code}}/stats
+
+### 5. Create with surrounding whitespace → 201, URL stripped
+POST {{baseUrl}}/api/urls
+Content-Type: application/json
+
+{ "url": "   https://example.com/padded   " }
+
+### --- Error cases ---
+
+### 6. Invalid scheme → 400 with errors[]
+POST {{baseUrl}}/api/urls
+Content-Type: application/json
+
+{ "url": "ftp://x.com" }
+
+### 7. Blank URL → 400
+POST {{baseUrl}}/api/urls
+Content-Type: application/json
+
+{ "url": "   " }
+
+### 8. Missing field → 400
+POST {{baseUrl}}/api/urls
+Content-Type: application/json
+
+{}
+
+### 9. Malformed JSON → 400 "Malformed JSON request body"
+POST {{baseUrl}}/api/urls
+Content-Type: application/json
+
+{ "url":
+
+### 10. Wrong content type → 415
+POST {{baseUrl}}/api/urls
+Content-Type: text/plain
+
+https://example.com
+
+### 11. Unknown code → 404 problem+json
+GET {{baseUrl}}/Zz9Zz9Z
+
+### 12. Invalid code shape → 404 (never hits the DB)
+GET {{baseUrl}}/abc
+
+### 13. Stats for unknown code → 404
+GET {{baseUrl}}/api/urls/Zz9Zz9Z/stats
+
+### 14. Wrong method → 405
+POST {{baseUrl}}/api/health
+
+### --- Docs ---
+
+### 15. OpenAPI spec → 200
+GET {{baseUrl}}/v3/api-docs
