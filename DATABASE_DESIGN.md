@@ -28,6 +28,10 @@ PostgreSQL 18. The schema is managed by Flyway; Hibernate only validates it (`sp
 
 The increment is a single atomic `UPDATE short_urls SET click_count = click_count + 1, last_accessed_at = ? WHERE code = ?` (`ShortUrlRepository.incrementClickCount`), not a read-modify-write in Java. With read-modify-write, two concurrent redirects can both read `5` and both write `6`, losing a click. The atomic UPDATE takes a row lock, so the database serializes concurrent increments and none are lost. A test with 20 simultaneous redirects verifies this.
 
+## Running in Docker
+
+Compose's `postgres` service creates database `urlshortener`; the `app` container connects to host `postgres` and Flyway migrates on startup. Data lives in the `postgres-data` volume (`docker compose down -v` wipes it).
+
 ## Schema changes
 
 All schema changes go through new Flyway migrations in `src/main/resources/db/migration` (`V2__description.sql`, and so on). Never edit a migration that has already been applied. Update the JPA entity to match, since `validate` fails startup on any mismatch.

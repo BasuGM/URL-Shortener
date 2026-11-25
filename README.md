@@ -1,60 +1,65 @@
 # URL Shortener
 
-A Spring Boot REST API for shortening URLs. So far: project setup, a health endpoint and PostgreSQL persistence.
+A Spring Boot REST API that shortens http/https URLs, redirects short codes to the original URL (HTTP 302) and counts clicks. Java 21, Spring Boot 4.2, PostgreSQL 18, Flyway.
 
-## Prerequisites
-
-- Java 21
-- Docker (for the local PostgreSQL database and for the tests, which use Testcontainers)
-
-## Run
-
-Start the database, then the app:
+## Quick start (Docker)
 
 ```bash
-docker compose up -d
+docker compose up --build
+```
+
+Starts PostgreSQL and the app. Once both are healthy:
+
+```bash
+curl -i -X POST http://localhost:8080/api/urls -H 'Content-Type: application/json' \
+  -d '{"url":"https://example.com/some/long/path"}'
+curl -i http://localhost:8080/<code>            # 302 -> original URL
+curl -i http://localhost:8080/api/urls/<code>/stats
+```
+
+- Swagger UI: <http://localhost:8080/swagger-ui.html>
+- OpenAPI JSON: <http://localhost:8080/v3/api-docs>
+
+## Local development
+
+Run only the database in Docker and the app from Maven:
+
+```bash
+docker compose up -d postgres
 ./mvnw spring-boot:run
 ```
 
-The server listens on port 8080 (override with `SERVER_PORT`). Flyway applies the schema migrations on startup.
-
-### Environment variables
-
-| Variable       | Default                                     | Purpose                                    |
-|----------------|---------------------------------------------|--------------------------------------------|
-| `SERVER_PORT`  | `8080`                                      | HTTP port                                  |
-| `DB_URL`       | `jdbc:postgresql://localhost:5432/urlshortener` | JDBC URL used by the app               |
-| `APP_BASE_URL` | `http://localhost:8080`                     | Public base URL used to build short links  |
-| `DB_USERNAME`  | `urlshortener`                              | Database user (also used by docker compose) |
-| `DB_PASSWORD`  | `urlshortener`                              | Database password (also used by docker compose) |
-
-The defaults are for local development only.
+Flyway applies the migrations on startup.
 
 ## Testing
 
-Docker must be running; DB-backed tests start one shared throwaway PostgreSQL container (Testcontainers).
+Docker must be running; DB-backed tests share one throwaway PostgreSQL container (Testcontainers).
+
+```bash
+./mvnw test                                   # all tests + JaCoCo report
+./mvnw test -Dtest=ShortUrlServiceTest        # one class
+open target/site/jacoco/index.html            # coverage report
+```
 
 | Type | Classes | Notes |
 |------|---------|-------|
 | Unit (Mockito) | `ShortUrlServiceTest`, `ShortCodeGeneratorTest` | No Spring context |
 | Web slice (`@WebMvcTest`) | `*ControllerTest`, `GlobalExceptionHandlerTest` | Service mocked |
 | Repository (`@DataJpaTest`) | `ShortUrlRepositoryTest` | Real PostgreSQL + Flyway |
-| Integration (`@SpringBootTest` + MockMvc) | `*IntegrationTest`, `UrlShortenerApplicationTests` | Full stack, one shared context |
+| Integration (`@SpringBootTest` + MockMvc) | `*IntegrationTest`, `UrlShortenerApplicationTests` | Full stack, shared context |
 
-```bash
-./mvnw test                                   # all tests + JaCoCo report
-./mvnw test -Dtest=ShortUrlServiceTest        # one class
-open target/site/jacoco/index.html            # coverage report (after a test run)
-```
+## Configuration
 
-## Try it
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `SERVER_PORT` | `8080` | HTTP port |
+| `DB_URL` | `jdbc:postgresql://localhost:5432/urlshortener` | JDBC URL (compose sets `jdbc:postgresql://postgres:5432/urlshortener`) |
+| `DB_USERNAME` | `urlshortener` | Database user (also used by the compose postgres service) |
+| `DB_PASSWORD` | `urlshortener` | Database password (also used by the compose postgres service) |
+| `APP_BASE_URL` | `http://localhost:8080` | Public base used to build `shortUrl` |
 
-```bash
-curl -i http://localhost:8080/api/health
-```
+The defaults are for local development only.
 
-```json
-{"status":"UP","service":"url-shortener","timestamp":"2026-11-25T09:00:00.123456Z"}
-```
+## Docs
 
-See [DATABASE_DESIGN.md](DATABASE_DESIGN.md) for the schema.
+[PROJECT_OVERVIEW](PROJECT_OVERVIEW.md) · [ARCHITECTURE](ARCHITECTURE.md) · [DATABASE_DESIGN](DATABASE_DESIGN.md) · [API_DOCUMENTATION](API_DOCUMENTATION.md) · [LEARNING_NOTES](LEARNING_NOTES.md) · [PROGRESS](PROGRESS.md) · [INTERVIEW_PREPARATION](INTERVIEW_PREPARATION.md)

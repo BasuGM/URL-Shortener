@@ -1,5 +1,7 @@
 # API Documentation
 
+> Interactive docs: Swagger UI at `/swagger-ui.html`, OpenAPI JSON at `/v3/api-docs` (generated from the code; the source of truth for the contract). This file adds examples and error details.
+>
 > All errors use the format described in [Errors](#errors).
 
 ## POST /api/urls
