@@ -7,6 +7,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.learninglab.urlshortener.dto.CreateShortUrlRequest;
 import com.learninglab.urlshortener.dto.ShortUrlResponse;
 import com.learninglab.urlshortener.entity.ShortUrl;
+import com.learninglab.urlshortener.exception.ShortUrlNotFoundException;
 import com.learninglab.urlshortener.repository.ShortUrlRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -76,5 +79,21 @@ class ShortUrlServiceTest {
 
 		verify(generator, org.mockito.Mockito.times(5)).generate();
 		verify(repository, never()).save(any());
+	}
+
+	@Test
+	void getOriginalUrlReturnsUrlForExistingCode() {
+		when(repository.findByCode("abc1234")).thenReturn(Optional.of(new ShortUrl("abc1234", "https://example.com/x")));
+
+		assertThat(service.getOriginalUrl("abc1234")).isEqualTo("https://example.com/x");
+	}
+
+	@Test
+	void getOriginalUrlThrowsForUnknownCode() {
+		when(repository.findByCode("nope123")).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> service.getOriginalUrl("nope123"))
+				.isInstanceOf(ShortUrlNotFoundException.class)
+				.hasMessage("Short URL not found: nope123");
 	}
 }

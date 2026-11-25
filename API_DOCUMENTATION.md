@@ -47,4 +47,25 @@ curl -i -X POST http://localhost:8080/api/urls \
   -d '{"url":"ftp://x.com"}'
 ```
 
-The base of `shortUrl` comes from `APP_BASE_URL` (default `http://localhost:8080`). Redirecting is not implemented yet.
+The base of `shortUrl` comes from `APP_BASE_URL` (default `http://localhost:8080`).
+
+## GET /{code}
+
+Redirects to the original URL. `code` must be exactly 7 Base62 characters (`[0-9A-Za-z]`); anything else is not routed here and returns 404. A temporary `302` is used (not `301`) so browsers don't cache it and clicks can be counted later.
+
+**Response `302 Found`** with `Location: <originalUrl>` and an empty body.
+
+**Status codes**
+
+| Code | When |
+|------|------|
+| 302  | Code exists; `Location` is the original URL |
+| 404  | Unknown code, or code not matching `[0-9A-Za-z]{7}` |
+
+**Example**
+
+```bash
+curl -i http://localhost:8080/aB3xY9z
+# HTTP/1.1 302
+# Location: https://example.com/some/long/path
+```

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import com.learninglab.urlshortener.dto.CreateShortUrlRequest;
 import com.learninglab.urlshortener.dto.ShortUrlResponse;
 import com.learninglab.urlshortener.entity.ShortUrl;
+import com.learninglab.urlshortener.exception.ShortUrlNotFoundException;
 import com.learninglab.urlshortener.repository.ShortUrlRepository;
 
 @Service
@@ -33,6 +34,12 @@ public class ShortUrlService {
 			}
 		}
 		throw new IllegalStateException("Could not generate a unique short code");
+	}
+
+	public String getOriginalUrl(String code) {
+		return repository.findByCode(code)
+				.map(ShortUrl::getOriginalUrl)
+				.orElseThrow(() -> new ShortUrlNotFoundException(code));
 	}
 
 	private ShortUrlResponse toResponse(ShortUrl entity) {
