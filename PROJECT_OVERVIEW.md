@@ -26,4 +26,4 @@ Java 21 · Spring Boot 4.2 (MVC, Validation, Data JPA) · PostgreSQL 18 · Flywa
 | `exception` | `ShortUrlNotFoundException`, `GlobalExceptionHandler` |
 | `config` | `OpenApiConfig` |
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for flows and [README.md](README.md) to run it.
+Run it with the [README](README.md); rules and flows are in [ARCHITECTURE.md](ARCHITECTURE.md).

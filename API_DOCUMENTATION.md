@@ -16,7 +16,7 @@ Creates a short link for an http/https URL.
 
 | Field | Rules |
 |-------|-------|
-| `url` | required, not blank, max 2048 chars, must match `^https?://\S+$` (http/https only; no whitespace) |
+| `url` | required, not blank, max 2048 chars, must match `^https?://\S+$` (http/https only, no whitespace inside). Leading/trailing whitespace is stripped before validation. |
 
 **Response `201 Created`** with `Location: <shortUrl>`
 
@@ -55,7 +55,7 @@ The base of `shortUrl` comes from `APP_BASE_URL` (default `http://localhost:8080
 
 ## GET /{code}
 
-Redirects to the original URL. `code` must be exactly 7 Base62 characters (`[0-9A-Za-z]`); anything else is not routed here and returns 404. A temporary `302` is used (not `301`) so browsers don't cache it so every redirect is counted.
+Redirects to the original URL. `code` must be exactly 7 Base62 characters (`[0-9A-Za-z]`); anything else is not routed here and returns 404. A temporary `302` is used (not `301`) so browsers don't cache it and every redirect is counted.
 
 **Response `302 Found`** with `Location: <originalUrl>` and an empty body. Each successful redirect increments the link's click count and updates its last-accessed time (see [stats](#get-apiurlscodestats)).
 
@@ -102,6 +102,20 @@ Returns click statistics for a short link. `code` must be exactly 7 Base62 chara
 
 ```bash
 curl -i http://localhost:8080/api/urls/aB3xY9z/stats
+```
+
+## GET /api/health
+
+Liveness check.
+
+**Response `200 OK`**
+
+```json
+{ "status": "UP", "service": "url-shortener", "timestamp": "2026-11-25T09:00:00.123456Z" }
+```
+
+```bash
+curl -i http://localhost:8080/api/health
 ```
 
 ## Errors

@@ -1,6 +1,6 @@
 # Progress
 
-All 8 milestones are complete.
+All 8 milestones are complete (59 tests passing).
 
 | # | Milestone | Status |
 |---|-----------|--------|

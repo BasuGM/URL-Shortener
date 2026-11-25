@@ -2,6 +2,29 @@
 
 PostgreSQL 18. The schema is managed by Flyway; Hibernate only validates it (`spring.jpa.hibernate.ddl-auto=validate`).
 
+## ER diagram
+
+```mermaid
+erDiagram
+    SHORT_URLS {
+        BIGINT id PK "identity, GENERATED ALWAYS"
+        VARCHAR_16 code UK "uk_short_urls_code, NOT NULL"
+        VARCHAR_2048 original_url "NOT NULL"
+        TIMESTAMPTZ created_at "NOT NULL"
+        BIGINT click_count "NOT NULL DEFAULT 0 (V2)"
+        TIMESTAMPTZ last_accessed_at "NULL until first click (V2)"
+    }
+```
+
+One table; no relations.
+
+## Migrations
+
+| Version | File | Effect |
+|---------|------|--------|
+| V1 | `V1__create_short_urls.sql` | Creates `short_urls` (`id`, `code`, `original_url`, `created_at`) with `uk_short_urls_code` unique on `code` |
+| V2 | `V2__add_click_count.sql` | Adds `click_count BIGINT NOT NULL DEFAULT 0` and `last_accessed_at TIMESTAMPTZ NULL` |
+
 ## Table `short_urls`
 
 | Column         | Type            | Constraints                                  | Meaning                                  |
