@@ -30,12 +30,21 @@ The server listens on port 8080 (override with `SERVER_PORT`). Flyway applies th
 
 The defaults are for local development only.
 
-## Test
+## Testing
 
-Docker must be running; tests start a throwaway PostgreSQL container.
+Docker must be running; DB-backed tests start one shared throwaway PostgreSQL container (Testcontainers).
+
+| Type | Classes | Notes |
+|------|---------|-------|
+| Unit (Mockito) | `ShortUrlServiceTest`, `ShortCodeGeneratorTest` | No Spring context |
+| Web slice (`@WebMvcTest`) | `*ControllerTest`, `GlobalExceptionHandlerTest` | Service mocked |
+| Repository (`@DataJpaTest`) | `ShortUrlRepositoryTest` | Real PostgreSQL + Flyway |
+| Integration (`@SpringBootTest` + MockMvc) | `*IntegrationTest`, `UrlShortenerApplicationTests` | Full stack, one shared context |
 
 ```bash
-./mvnw test
+./mvnw test                                   # all tests + JaCoCo report
+./mvnw test -Dtest=ShortUrlServiceTest        # one class
+open target/site/jacoco/index.html            # coverage report (after a test run)
 ```
 
 ## Try it

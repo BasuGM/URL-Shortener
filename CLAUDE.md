@@ -26,11 +26,12 @@ Layered Spring MVC app under `com.learninglab.urlshortener`: `controller` → `s
 - **Not yet implemented**: SpringDoc.
 - **Errors**: `GlobalExceptionHandler` (`@RestControllerAdvice` extending `ResponseEntityExceptionHandler`) returns RFC 9457 `ProblemDetail` (`application/problem+json`, `instance` = request path) for everything, including Spring MVC's own 404/405/415. 400 validation adds an `errors[{field,message}]` list; 500 hides the exception message and only logs it. New exceptions get an `@ExceptionHandler` there, not `@ResponseStatus`.
 - **Schema** is owned by Flyway (`src/main/resources/db/migration`); Hibernate only runs `ddl-auto=validate`, so any entity/schema mismatch fails startup. Never edit an applied migration; add `V<n>__description.sql` and update the entity. See `DATABASE_DESIGN.md`.
-- `code` is unique at the DB level; the `existsByCode` check is an optimization, not the only guard against collisions.
+- `code` is unique at the DB level; the `existsByCode` check is an optimization. `create` uses `saveAndFlush` and retries on `DataIntegrityViolationException`; pre-check collisions and save violations share the 5-attempt limit.
 
 ## Testing notes
 
 - Spring Boot 4 specifics: use `@MockitoBean` (not `@MockBean`); `@WebMvcTest` is in `org.springframework.boot.webmvc.test.autoconfigure`; Jackson is 3.x (`tools.jackson`), so `com.fasterxml.jackson.databind` isn't available — use `JsonPath` in tests.
+- JaCoCo runs with `./mvnw test`; report at `target/site/jacoco/index.html`. All Testcontainers tests share one static Postgres container (`TestcontainersConfiguration`); keep `@SpringBootTest` tests on identical annotations (`@AutoConfigureMockMvc` + `@Import`) and avoid `@DirtiesContext` so the context is reused.
 - DB-backed tests import `TestcontainersConfiguration` (`@DataJpaTest` also needs `@AutoConfigureTestDatabase(replace = NONE)`). Service tests are pure Mockito with no Spring context.
 - Validation runs before the service trims, so URLs with surrounding whitespace get 400 via the API.
 

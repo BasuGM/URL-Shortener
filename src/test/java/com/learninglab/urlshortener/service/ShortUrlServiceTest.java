@@ -17,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.learninglab.urlshortener.dto.CreateShortUrlRequest;
@@ -46,12 +47,12 @@ class ShortUrlServiceTest {
 	void savesWithGeneratedCodeAndReturnsResponse() {
 		when(generator.generate()).thenReturn("abc1234");
 		when(repository.existsByCode("abc1234")).thenReturn(false);
-		when(repository.save(any(ShortUrl.class))).thenAnswer(inv -> inv.getArgument(0));
+		when(repository.saveAndFlush(any(ShortUrl.class))).thenAnswer(inv -> inv.getArgument(0));
 
 		ShortUrlResponse response = service.create(new CreateShortUrlRequest("https://example.com/x"));
 
 		ArgumentCaptor<ShortUrl> captor = ArgumentCaptor.forClass(ShortUrl.class);
-		verify(repository).save(captor.capture());
+		verify(repository).saveAndFlush(captor.capture());
 		assertThat(captor.getValue().getCode()).isEqualTo("abc1234");
 		assertThat(captor.getValue().getOriginalUrl()).isEqualTo("https://example.com/x");
 		assertThat(response.code()).isEqualTo("abc1234");
@@ -65,7 +66,7 @@ class ShortUrlServiceTest {
 		when(generator.generate()).thenReturn("taken01", "free002");
 		when(repository.existsByCode("taken01")).thenReturn(true);
 		when(repository.existsByCode("free002")).thenReturn(false);
-		when(repository.save(any(ShortUrl.class))).thenAnswer(inv -> inv.getArgument(0));
+		when(repository.saveAndFlush(any(ShortUrl.class))).thenAnswer(inv -> inv.getArgument(0));
 
 		ShortUrlResponse response = service.create(new CreateShortUrlRequest("https://example.com"));
 
@@ -82,7 +83,34 @@ class ShortUrlServiceTest {
 				.hasMessage("Could not generate a unique short code");
 
 		verify(generator, org.mockito.Mockito.times(5)).generate();
-		verify(repository, never()).save(any());
+		verify(repository, never()).saveAndFlush(any());
+	}
+
+	@Test
+	void retriesWhenSaveHitsUniqueViolation() {
+		when(generator.generate()).thenReturn("race001", "free002");
+		when(repository.existsByCode(any())).thenReturn(false);
+		when(repository.saveAndFlush(any(ShortUrl.class)))
+				.thenThrow(new DataIntegrityViolationException("duplicate"))
+				.thenAnswer(inv -> inv.getArgument(0));
+
+		ShortUrlResponse response = service.create(new CreateShortUrlRequest("https://example.com"));
+
+		assertThat(response.code()).isEqualTo("free002");
+		verify(repository, org.mockito.Mockito.times(2)).saveAndFlush(any(ShortUrl.class));
+	}
+
+	@Test
+	void throwsAfterFiveSaveViolations() {
+		when(generator.generate()).thenReturn("race001");
+		when(repository.existsByCode(any())).thenReturn(false);
+		when(repository.saveAndFlush(any(ShortUrl.class))).thenThrow(new DataIntegrityViolationException("duplicate"));
+
+		assertThatThrownBy(() -> service.create(new CreateShortUrlRequest("https://example.com")))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage("Could not generate a unique short code");
+
+		verify(repository, org.mockito.Mockito.times(5)).saveAndFlush(any(ShortUrl.class));
 	}
 
 	@Test

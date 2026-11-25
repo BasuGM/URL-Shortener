@@ -3,6 +3,7 @@ package com.learninglab.urlshortener.service;
 import java.time.Instant;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,8 +34,13 @@ public class ShortUrlService {
 		String url = request.url();
 		for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
 			String code = generator.generate();
-			if (!repository.existsByCode(code)) {
-				return toResponse(repository.save(new ShortUrl(code, url)));
+			if (repository.existsByCode(code)) {
+				continue;
+			}
+			try {
+				return toResponse(repository.saveAndFlush(new ShortUrl(code, url)));
+			} catch (DataIntegrityViolationException e) {
+				// Lost a race on the unique code constraint; try a fresh code.
 			}
 		}
 		throw new IllegalStateException("Could not generate a unique short code");

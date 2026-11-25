@@ -8,9 +8,12 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 @TestConfiguration(proxyBeanMethods = false)
 public class TestcontainersConfiguration {
 
+	// One container for the whole test JVM, shared by every cached Spring context.
+	private static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:18");
+
 	@Bean
 	@ServiceConnection
 	PostgreSQLContainer postgresContainer() {
-		return new PostgreSQLContainer("postgres:18");
+		return POSTGRES;
 	}
 }
